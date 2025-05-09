@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-amq
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flask-amq
+  template:
+    metadata:
+      labels:
+        app: flask-amq
+    spec:
+      containers:
+        - name: flask-amq
+          image: your-dockerhub-user/flask-amq:latest # Replace with your image
+          ports:
+            - containerPort: 8080
+          env:
+            - name: AMQ_URL
+              value: "amqp://amq-broker:5672"
+            - name: AMQ_QUEUE
+              value: "example-queue"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flask-amq-service
+spec:
+  selector:
+    app: flask-amq
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: flask-amq
+spec:
+  to:
+    kind: Service
+    name: flask-amq-service
+  port:
+    targetPort: 80
+  tls:
+    termination: edge
